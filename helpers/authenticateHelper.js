@@ -24,7 +24,7 @@ exports.loginHandler = asyncHandler(async (req, res, next) => {
       })
       .json({
         // add Secure
-        auth: `auth=true; Max-Age=${60 * 60}; SameSite=None;`,
+        userId: `auth=${user._id}; Max-Age=${60 * 60}; SameSite=None;`,
       });
   })(req, res, next);
 });
@@ -37,7 +37,7 @@ exports.jwtHandler = asyncHandler(async (req, res, next) => {
         .clearCookie("token")
         .json({
           // add Secure
-          auth: `auth=true; Max-Age=${0}; SameSite=None;`,
+          auth: `auth=false; Max-Age=${0}; SameSite=None;`,
         });
     }
     req.user = jwt_payload;
