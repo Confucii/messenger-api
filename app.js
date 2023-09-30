@@ -11,6 +11,10 @@ require("dotenv").config();
 
 require("./helpers/passportConfig");
 
+const userRouter = require("./routes/userRouter");
+const chatRouter = require("./routes/chatRouter");
+const messageRouter = require("./routes/messageRouter");
+
 const app = express();
 
 mongoose.set("strictQuery", false);
@@ -38,6 +42,10 @@ const limiter = RateLimit({
 });
 // Apply rate limiter to all requests
 app.use(limiter);
+
+app.use("/users", userRouter);
+app.use("/chats", chatRouter);
+app.use("/messages", messageRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
