@@ -1,16 +1,18 @@
-import express, { Express, Request, Response, NextFunction } from "express";
+import express, { Express } from "express";
 import { errorHandler } from "./middlewares/errors";
 import dotenv from "dotenv";
 dotenv.config();
-import indexRouter from "./routes/defaultRouter";
-import usersRouter from "./routes/users";
-
+import userRouter from "./routes/userRouter";
+import { connectDB } from "./utils/dbConnect";
 let createError = require("http-errors");
 let path = require("path");
 let cookieParser = require("cookie-parser");
 let logger = require("morgan");
-
 let app: Express = express();
+
+require("express-async-errors");
+
+connectDB().catch((err) => console.log(err));
 
 app.use(logger("dev"));
 app.use(express.json());
@@ -18,11 +20,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "build")));
 
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
+app.use("/users", userRouter);
 
 // catch 404 and forward to error handler
-app.use(function (req, res, next) {
+app.use(function (_req, _res, next) {
   next(createError(404));
 });
 
