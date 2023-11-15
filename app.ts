@@ -1,18 +1,30 @@
 import express, { Express } from "express";
 import { errorHandler } from "./middlewares/errors";
+import userRouter from "./routes/userRouter";
+import createError from "http-errors";
+import cookieParser from "cookie-parser";
+import logger from "morgan";
+import path from "path";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config();
-import userRouter from "./routes/userRouter";
-import { connectDB } from "./utils/dbConnect";
-let createError = require("http-errors");
-let path = require("path");
-let cookieParser = require("cookie-parser");
-let logger = require("morgan");
+
 let app: Express = express();
 
 require("express-async-errors");
 
-connectDB().catch((err) => console.log(err));
+mongoose.set("strictQuery", false);
+const mongoDB = process.env.MONGODB_URI;
+
+async function connectDB() {
+  if (mongoDB) await mongoose.connect(mongoDB);
+}
+
+connectDB()
+  .then(() => {
+    console.log("success");
+  })
+  .catch((err) => console.log(err));
 
 app.use(logger("dev"));
 app.use(express.json());

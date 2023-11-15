@@ -1,6 +1,8 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { User } from "../models/user";
-const bcrypt = require("bcrypt");
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import checkAuth from "../middlewares/userHandler";
 
 export const register = async (req: Request, res: Response) => {
   const userExists = await User.findOne({ username: req.body.username });
@@ -12,47 +14,61 @@ export const register = async (req: Request, res: Response) => {
       displayName: req.body.displayName,
     });
     await newUser.save();
-    res.status(200).json({ message: "Registered successfully" });
+    return res.status(200).json({ message: "Registered successfully" });
   } else {
-    res.status(400).json({ error: "User already exists" });
+    return res.status(400).json({ error: "User already exists" });
   }
 };
 
-export const login = async (req: Request, res: Response) => {};
+export const login = async (req: Request, res: Response) => {
+  const user = await User.findOne({ username: req.body.username });
+  if (!user) {
+    return res.status(400).json({ message: "Incorrect username" });
+  }
+  const match = await bcrypt.compare(req.body.password, user.password);
+  if (!match) {
+    return res.status(400).json({ message: "Incorrect password" });
+  }
 
-export const logout = async (req: Request, res: Response) => {
-  res
+  const token = jwt.sign({ id: user.id }, process.env.SECRET as string, {
+    expiresIn: "1h",
+  });
+
+  return res
     .status(200)
-    .clearCookie("token", { sameSite: "none" /* secure: true */ })
-    .json({
-      logout: true,
-      // Add Secure
-      auth: `auth=false; Max-Age=${0}; SameSite=None;`,
-    });
+    .cookie("token", token, {
+      httpOnly: true,
+      maxAge: 60 * 60 * 1000,
+      //secure: true,
+    })
+    .cookie("auth", true, {
+      maxAge: 60 * 60 * 1000,
+      // secure: true
+    })
+    .end();
 };
 
-export const getUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const user = await User.findById(req.user);
+export const logout = async (_req: Request, res: Response) => {
+  return res.status(200).clearCookie("token").clearCookie("auth").end();
+};
+
+export const getUser = async (req: Request, res: Response) => {
+  const user = await User.findById(req.user, "displayName status");
 
   if (user === null) {
-    const err = new Error("User not found");
-    return next(err);
+    return res.status(404).end();
   }
 
-  res.status(200).json(user);
+  return res.status(200).json(user);
 };
 
 export const updateUser = [
-  async (req: Request, res: Response, next: NextFunction) => {
+  checkAuth,
+  async (req: Request, res: Response) => {
     const user = await User.findById(req.user);
 
     if (user === null) {
-      const err = new Error("User not found");
-      return next(err);
+      return res.status(404).end();
     }
 
     if (
@@ -64,7 +80,7 @@ export const updateUser = [
       if (!match) {
         res.status(400).json({ message: "Current password does not match" });
       } else if (req.body.newPassword !== req.body.newPasswordConfirm) {
-        res.status(400).json({ message: "Passwords do not match" });
+        res.status(400).json({ message: "New password does not match" });
       } else {
         req.body.password = await bcrypt.hash(req.body.newPassword, 10);
       }
@@ -73,7 +89,9 @@ export const updateUser = [
       req.body.newPassword ||
       req.body.newPasswordConfirm
     ) {
-      res.status(400).json({ message: "All input fields should be filled in" });
+      return res
+        .status(400)
+        .json({ message: "All input fields should be filled in" });
     }
     await User.findByIdAndUpdate(
       req.user,
@@ -82,8 +100,8 @@ export const updateUser = [
         ...(req.body.displayName && { displayName: req.body.displayName }),
         ...(req.body.status && { status: req.body.status }),
       },
-      {}
+      { runValidators: true }
     );
-    res.status(200).send();
+    return res.status(200).send();
   },
 ];
