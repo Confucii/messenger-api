@@ -1,8 +1,8 @@
 import express from "express";
 import * as messageController from "../controllers/messageController";
 
-const router = express.Router();
+const messageRouter = express.Router();
 
-router.post("/", messageController.postChatMessage);
+messageRouter.post("/", messageController.postChatMessage);
 
-module.exports = router;
+export default messageRouter;

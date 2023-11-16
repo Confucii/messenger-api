@@ -8,8 +8,11 @@ export const errorHandler = (
 ) => {
   if (err.name === "NotFoundError") {
     return res.status(404).json({ error: "Not found" });
+  } else if (err.name === "ValidationError") {
+    return res.status(400).json({ error: err.message });
+  } else {
+    return res
+      .status(500)
+      .send({ errors: [{ message: "Something went wrong" }] });
   }
-
-  console.error(err);
-  res.status(500).send({ errors: [{ message: "Something went wrong" }] });
 };

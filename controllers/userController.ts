@@ -1,12 +1,22 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { User } from "../models/user";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import checkAuth from "../middlewares/userHandler";
+import escapeStringRegexp from "escape-string-regexp";
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const userExists = await User.findOne({ username: req.body.username });
   if (!userExists) {
+    if (req.body.password < 8) {
+      return res
+        .status(401)
+        .json({ error: "Password is shorter than 8 characters" });
+    }
     const password = await bcrypt.hash(req.body.password, 10);
     const newUser = new User({
       username: req.body.username,
@@ -53,7 +63,11 @@ export const logout = async (_req: Request, res: Response) => {
 };
 
 export const getUser = async (req: Request, res: Response) => {
-  const user = await User.findById(req.user, "displayName status");
+  const $regex = escapeStringRegexp(req.params.displayname);
+  const user = await User.find(
+    { displayName: { $regex, $options: "i" } },
+    "displayName status"
+  );
 
   if (user === null) {
     return res.status(404).end();
@@ -76,6 +90,11 @@ export const updateUser = [
       req.body.newPassword &&
       req.body.newPasswordConfirm
     ) {
+      if (req.body.newPassword < 8) {
+        return res
+          .status(401)
+          .json({ error: "Password is shorter than 8 characters" });
+      }
       const match = await bcrypt.compare(req.body.oldPassword, user.password);
       if (!match) {
         res.status(400).json({ message: "Current password does not match" });

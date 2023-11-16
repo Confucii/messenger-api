@@ -7,6 +7,7 @@ const MessageSchema = new Schema({
   text: {
     type: String,
     required: true,
+    minlength: 1,
   },
   timestamp: { type: Date, default: Date.now },
   chat: { type: Schema.Types.ObjectId, ref: "Chat", required: true },

@@ -13,4 +13,4 @@ router.put("/:chatid", chatController.updateChat);
 
 router.delete("/:chatid", chatController.deleteChat);
 
-module.exports = router;
+export default router;
