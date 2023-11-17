@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 const ChatSchema = new Schema({
-  users: [{ type: Schema.Types.ObjectId, ref: "User", required: true }],
+  userOne: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  userTwo: { type: Schema.Types.ObjectId, ref: "User", required: true },
   updatedAt: { type: Date, default: Date.now },
 });
 

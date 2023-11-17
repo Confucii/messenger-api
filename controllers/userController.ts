@@ -8,7 +8,7 @@ import escapeStringRegexp from "escape-string-regexp";
 export const register = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
   const userExists = await User.findOne({ username: req.body.username });
   if (!userExists) {
@@ -112,15 +112,18 @@ export const updateUser = [
         .status(400)
         .json({ message: "All input fields should be filled in" });
     }
-    await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       req.user,
       {
         ...(req.body.password && { password: req.body.password }),
         ...(req.body.displayName && { displayName: req.body.displayName }),
         ...(req.body.status && { status: req.body.status }),
       },
-      { runValidators: true }
+      { runValidators: true, new: true }
     );
-    return res.status(200).send();
+    return res.status(200).json({
+      displayName: updatedUser?.displayName,
+      status: updatedUser?.status,
+    });
   },
 ];

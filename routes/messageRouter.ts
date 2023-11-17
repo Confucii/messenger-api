@@ -3,6 +3,6 @@ import * as messageController from "../controllers/messageController";
 
 const messageRouter = express.Router();
 
-messageRouter.post("/", messageController.postChatMessage);
+messageRouter.post("/:chatid", messageController.postChatMessage);
 
 export default messageRouter;
