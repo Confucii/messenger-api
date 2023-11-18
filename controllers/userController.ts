@@ -51,7 +51,7 @@ export const login = async (req: Request, res: Response) => {
       maxAge: 60 * 60 * 1000,
       //secure: true,
     })
-    .cookie("auth", true, {
+    .cookie("auth", user.username, {
       maxAge: 60 * 60 * 1000,
       // secure: true
     })
