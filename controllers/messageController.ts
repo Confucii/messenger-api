@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Message } from "../models/message";
 import { Chat } from "../models/chat";
 import checkAuth from "../middlewares/userHandler";
+import { log } from "console";
 
 export const postChatMessage = [
   checkAuth,
@@ -16,6 +17,8 @@ export const postChatMessage = [
     chat.updatedAt = new Date(Date.now());
     await chat.save();
     await newMessage.save();
+    const io = await req.app.get("socket");
+    io.emit("confirm");
     return res.status(200).json(newMessage);
   },
 ];

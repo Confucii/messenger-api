@@ -11,7 +11,6 @@ function getIo(server: Server<typeof IncomingMessage, typeof ServerResponse>) {
   io.on("connection", (socket) => {
     socket.on("authorize", (auth) => {
       socket.join(auth);
-      io.to(auth).emit("sendConfirmation");
     });
   });
 
