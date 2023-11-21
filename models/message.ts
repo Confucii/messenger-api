@@ -1,9 +1,17 @@
-import mongoose from "mongoose";
-const { DateTime } = require("luxon");
+import mongoose, { Types } from "mongoose";
+import { DateTime } from "luxon";
+
+interface Message {
+  text: string;
+  timestamp: Date;
+  chat: Types.ObjectId;
+  sender: Types.ObjectId;
+  date: string;
+}
 
 const Schema = mongoose.Schema;
 
-const MessageSchema = new Schema({
+const MessageSchema = new Schema<Message>({
   text: {
     type: String,
     required: true,
@@ -16,7 +24,7 @@ const MessageSchema = new Schema({
 
 MessageSchema.virtual("date").get(function () {
   return this.timestamp
-    ? DateTime.fromJSDate(this.timestamp).toLocaleString(DateTime.DATE_MED)
+    ? DateTime.fromJSDate(this.timestamp).toFormat("HH:mm LLL dd")
     : "";
 });
 
