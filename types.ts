@@ -1,6 +1,6 @@
 export interface PopulatedChat {
   id: string;
-  userOne: { displayName: string };
-  userTwo: { displayName: string };
+  userOne: { displayName: string; id: string };
+  userTwo: { displayName: string; id: string };
   updatedAt: Date;
 }

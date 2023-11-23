@@ -24,7 +24,7 @@ const MessageSchema = new Schema<Message>({
 
 MessageSchema.virtual("date").get(function () {
   return this.timestamp
-    ? DateTime.fromJSDate(this.timestamp).toFormat("HH:mm LLL dd")
+    ? DateTime.fromJSDate(this.timestamp).toFormat("LLL dd HH:mm")
     : "";
 });
 

@@ -16,15 +16,21 @@ export const getChats = [
 
     const chatMessages = await Promise.all(
       chats.map(async (chat) => {
-        const message = await Message.find({ chat: chat.id })
+        const message = await Message.findOne({ chat: chat.id })
           .sort({ timestamp: -1 })
-          .limit(1);
+          .limit(1)
+          .populate("sender", "displayName");
         return {
           id: chat.id,
-          updatedAt: chat.updatedAt,
-          userOneDisplayName: chat.userOne.displayName,
-          userTwoDisplayName: chat.userTwo.displayName,
-          text: message[0].text,
+          interlocutor:
+            req.user === chat.userOne.id
+              ? chat.userTwo.displayName
+              : chat.userOne.displayName,
+          lastMessage: {
+            sender: message?.sender,
+            text: message?.text,
+            timestamp: message?.date,
+          },
         };
       })
     );
@@ -51,7 +57,7 @@ export const getChat = [
   async (req: Request, res: Response) => {
     const chat = await Chat.findById(req.params.chatid);
     if (!chat) return res.status(400).json({ message: "Chat does not exist" });
-    if (String(chat.userOne) !== req.user || String(chat.userTwo) !== req.user)
+    if (String(chat.userOne) !== req.user && String(chat.userTwo) !== req.user)
       return res.status(401).json({ message: "Insufficient access" });
     const messages = await Message.find({ chat: req.params.chatid }).sort({
       timestamp: 1,
