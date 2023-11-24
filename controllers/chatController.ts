@@ -26,7 +26,7 @@ export const getChats = [
             req.user === chat.userOne.id
               ? chat.userTwo.displayName
               : chat.userOne.displayName,
-          lastMessage: {
+          messages: {
             sender: message?.sender,
             text: message?.text,
             timestamp: message?.date,
@@ -55,13 +55,29 @@ export const createChat = [
 export const getChat = [
   checkAuth,
   async (req: Request, res: Response) => {
-    const chat = await Chat.findById(req.params.chatid);
+    const chat = (await Chat.findById(req.params.chatid)
+      .populate("userOne", "displayName")
+      .populate("userTwo", "displayName")) as unknown as PopulatedChat;
     if (!chat) return res.status(400).json({ message: "Chat does not exist" });
     if (String(chat.userOne) !== req.user && String(chat.userTwo) !== req.user)
       return res.status(401).json({ message: "Insufficient access" });
     const messages = await Message.find({ chat: req.params.chatid }).sort({
       timestamp: 1,
     });
-    res.status(200).json(messages);
+    const responseChat = {
+      id: chat.id,
+      intelocutor:
+        req.user === chat.userOne.id
+          ? chat.userTwo.displayName
+          : chat.userOne.displayName,
+      messages: messages.map((message) => {
+        return {
+          sender: message?.sender,
+          text: message?.text,
+          timestamp: message?.date,
+        };
+      }),
+    };
+    res.status(200).json(responseChat);
   },
 ];
