@@ -26,11 +26,13 @@ export const getChats = [
             req.user === chat.userOne.id
               ? chat.userTwo.displayName
               : chat.userOne.displayName,
-          messages: {
-            sender: message?.sender,
-            text: message?.text,
-            timestamp: message?.date,
-          },
+          messages: [
+            {
+              sender: message?.sender,
+              text: message?.text,
+              timestamp: message?.date,
+            },
+          ],
         };
       })
     );

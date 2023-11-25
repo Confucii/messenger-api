@@ -65,7 +65,12 @@ export const logout = async (_req: Request, res: Response) => {
 export const getUser = async (req: Request, res: Response) => {
   const $regex = escapeStringRegexp(req.params.displayname);
   const user = await User.find(
-    { displayName: { $regex, $options: "i" } },
+    {
+      $or: [
+        { displayName: { $regex, $options: "i" } },
+        { username: { $regex, $options: "i" } },
+      ],
+    },
     "displayName status"
   );
 
