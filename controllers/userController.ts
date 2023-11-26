@@ -12,10 +12,8 @@ export const register = async (
 ) => {
   const userExists = await User.findOne({ username: req.body.username });
   if (!userExists) {
-    if (req.body.password < 8) {
-      return res
-        .status(401)
-        .json({ error: "Password is shorter than 8 characters" });
+    if (req.body.password !== req.body.confirmPassword) {
+      return res.status(400).json({ error: "Passwords do not match" });
     }
     const password = await bcrypt.hash(req.body.password, 10);
     const newUser = new User({
@@ -26,18 +24,18 @@ export const register = async (
     await newUser.save();
     return res.status(200).json({ message: "Registered successfully" });
   } else {
-    return res.status(400).json({ error: "User already exists" });
+    return res.status(400).json({ error: "Username is taken" });
   }
 };
 
 export const login = async (req: Request, res: Response) => {
   const user = await User.findOne({ username: req.body.username });
   if (!user) {
-    return res.status(400).json({ message: "Incorrect username" });
+    return res.status(400).json({ error: "Username or password is incorrect" });
   }
   const match = await bcrypt.compare(req.body.password, user.password);
   if (!match) {
-    return res.status(400).json({ message: "Incorrect password" });
+    return res.status(400).json({ error: "Username or password is incorrect" });
   }
 
   const token = jwt.sign({ id: user.id }, process.env.SECRET as string, {

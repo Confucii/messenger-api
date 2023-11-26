@@ -5,17 +5,17 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
   username: {
     type: String,
-    required: true,
-    minlength: 5,
+    minlength: [5, "Username length should be at least 5 characters"],
+    required: [true, "Username length should be at least 5 characters"],
   },
   password: {
     type: String,
-    required: true,
+    required: [true, "Username length should be at least 8 characters"],
+    minlength: [8, "Username length should be at least 8 characters"],
   },
   displayName: {
     type: String,
-    required: true,
-    minlength: 5,
+    required: [true, "Display name is required"],
   },
   status: {
     type: String,
