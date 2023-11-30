@@ -61,7 +61,10 @@ export const getChat = [
       .populate("userOne", "displayName")
       .populate("userTwo", "displayName")) as unknown as PopulatedChat;
     if (!chat) return res.status(400).json({ message: "Chat does not exist" });
-    if (String(chat.userOne) !== req.user && String(chat.userTwo) !== req.user)
+    if (
+      String(chat.userOne.id) !== req.user &&
+      String(chat.userTwo.id) !== req.user
+    )
       return res.status(401).json({ message: "Insufficient access" });
     const messages = await Message.find({ chat: req.params.chatid }).sort({
       timestamp: 1,
