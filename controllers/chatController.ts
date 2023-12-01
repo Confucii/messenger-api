@@ -73,7 +73,7 @@ export const getChat = [
       .populate("sender", "displayName");
     const responseChat = {
       id: chat.id,
-      intelocutor:
+      interlocutor:
         req.user === chat.userOne.id
           ? chat.userTwo.displayName
           : chat.userOne.displayName,
