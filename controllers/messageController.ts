@@ -16,14 +16,15 @@ export const postChatMessage = [
     chat.updatedAt = new Date(newMessage.date);
     await chat.save();
     await newMessage.save();
+    await newMessage.populate("sender", "displayName");
     const io = await req.app.get("socket");
-    io.to(String(chat.userOne))
-      .to(String(chat.userTwo))
-      .emit("newMessage", {
-        chat: chat.id,
-        message: newMessage.text,
-        timestamp: newMessage.date,
-      });
+    io.to(String(chat.userOne)).to(String(chat.userTwo)).emit("newMessage", {
+      chat: chat.id,
+      id: newMessage.id,
+      sender: newMessage.sender,
+      text: newMessage.text,
+      timestamp: newMessage.date,
+    });
     return res.status(200).json(newMessage);
   },
 ];

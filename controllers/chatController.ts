@@ -66,9 +66,11 @@ export const getChat = [
       String(chat.userTwo.id) !== req.user
     )
       return res.status(401).json({ message: "Insufficient access" });
-    const messages = await Message.find({ chat: req.params.chatid }).sort({
-      timestamp: 1,
-    });
+    const messages = await Message.find({ chat: req.params.chatid })
+      .sort({
+        timestamp: 1,
+      })
+      .populate("sender", "displayName");
     const responseChat = {
       id: chat.id,
       intelocutor:
@@ -77,6 +79,7 @@ export const getChat = [
           : chat.userOne.displayName,
       messages: messages.map((message) => {
         return {
+          id: message?.id,
           sender: message?.sender,
           text: message?.text,
           timestamp: message?.date,
