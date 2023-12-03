@@ -22,10 +22,14 @@ export const getChats = [
           .populate("sender", "displayName");
         return {
           id: chat.id,
-          interlocutor:
-            req.user === chat.userOne.id
-              ? chat.userTwo.displayName
-              : chat.userOne.displayName,
+          interlocutor: {
+            name:
+              req.user === chat.userOne.id
+                ? chat.userTwo.displayName
+                : chat.userOne.displayName,
+            id:
+              req.user === chat.userOne.id ? chat.userTwo.id : chat.userOne.id,
+          },
           messages: [
             {
               sender: message?.sender,
@@ -43,14 +47,35 @@ export const getChats = [
 export const createChat = [
   checkAuth,
   async (req: Request, res: Response) => {
-    const user = await User.findById(req.body.recipient);
-    if (!user) return res.status(400).json({ message: "User does not exist" });
-    const newChatOne = new Chat({
+    const sender = await User.findById(req.user);
+    const recipient = await User.findById(req.body.recipient);
+    if (!recipient)
+      return res.status(400).json({ message: "User does not exist" });
+    const chatExists = await Chat.find({
+      $or: [
+        { userOne: req.user, userTwo: req.body.recipient },
+        { userOne: req.body.recipient, userTwo: req.user },
+      ],
+    });
+    if (chatExists.length > 0) return res.status(200).json(chatExists);
+    const newChat = new Chat({
       userOne: req.user,
       userTwo: req.body.recipient,
     });
-    await newChatOne.save();
-    res.status(200).json(newChatOne);
+    const io = await req.app.get("socket");
+
+    io.to(String(req.user)).emit("newChat", {
+      id: newChat.id,
+      interlocutor: { name: recipient.displayName, id: recipient.id },
+      messages: [],
+    });
+    io.to(String(req.body.recipient)).emit("newChat", {
+      id: newChat.id,
+      interlocutor: { name: sender?.displayName, id: sender?.id },
+      messages: [],
+    });
+    await newChat.save();
+    res.status(200).json(newChat);
   },
 ];
 
@@ -73,10 +98,13 @@ export const getChat = [
       .populate("sender", "displayName");
     const responseChat = {
       id: chat.id,
-      interlocutor:
-        req.user === chat.userOne.id
-          ? chat.userTwo.displayName
-          : chat.userOne.displayName,
+      interlocutor: {
+        name:
+          req.user === chat.userOne.id
+            ? chat.userTwo.displayName
+            : chat.userOne.displayName,
+        id: req.user === chat.userOne.id ? chat.userTwo.id : chat.userOne.id,
+      },
       messages: messages.map((message) => {
         return {
           id: message?.id,
