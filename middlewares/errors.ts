@@ -9,7 +9,7 @@ export const errorHandler = (
   if (err.name === "NotFoundError") {
     return res.status(404).json({ error: "Not found" });
   } else if (err.name === "ValidationError") {
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: err });
   } else {
     return res
       .status(500)

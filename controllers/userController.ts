@@ -12,30 +12,51 @@ export const register = async (
 ) => {
   const userExists = await User.findOne({ username: req.body.username });
   if (!userExists) {
-    if (req.body.password !== req.body.confirmPassword) {
-      return res.status(400).json({ error: "Passwords do not match" });
+    let password = req.body.password;
+    if (password.length >= 8) {
+      password = await bcrypt.hash(req.body.password, 10);
     }
-    const password = await bcrypt.hash(req.body.password, 10);
     const newUser = new User({
       username: req.body.username,
       password: password,
       displayName: req.body.displayName,
     });
+    const err = newUser.validateSync();
+    if (err) throw err;
+    if (req.body.password !== req.body.confirmPassword) {
+      return res.status(400).json({
+        error: {
+          errors: { confirmPassword: { message: "Passwords do not match" } },
+        },
+      });
+    }
     await newUser.save();
     return res.status(200).json({ message: "Registered successfully" });
   } else {
-    return res.status(400).json({ error: "Username is taken" });
+    return res.status(400).json({
+      error: {
+        errors: { username: { message: "Username is taken" } },
+      },
+    });
   }
 };
 
 export const login = async (req: Request, res: Response) => {
   const user = await User.findOne({ username: req.body.username });
   if (!user) {
-    return res.status(400).json({ error: "Username or password is incorrect" });
+    return res.status(400).json({
+      error: {
+        errors: { login: { message: "Username or password is incorrect" } },
+      },
+    });
   }
   const match = await bcrypt.compare(req.body.password, user.password);
   if (!match) {
-    return res.status(400).json({ error: "Username or password is incorrect" });
+    return res.status(400).json({
+      error: {
+        errors: { login: { message: "Username or password is incorrect" } },
+      },
+    });
   }
 
   const token = jwt.sign({ id: user.id }, process.env.SECRET as string, {
