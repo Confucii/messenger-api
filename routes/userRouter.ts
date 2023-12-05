@@ -3,7 +3,7 @@ import * as userController from "../controllers/userController";
 
 const userRouter = express.Router();
 
-userRouter.get("/:displayname", userController.getUser);
+userRouter.get("/:userData", userController.getUser);
 
 userRouter.put("/", userController.updateUser);
 

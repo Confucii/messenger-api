@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import checkAuth from "../middlewares/userHandler";
 import escapeStringRegexp from "escape-string-regexp";
+import { isValidObjectId } from "mongoose";
 
 export const register = async (
   req: Request,
@@ -82,7 +83,7 @@ export const logout = async (_req: Request, res: Response) => {
 };
 
 export const getUser = async (req: Request, res: Response) => {
-  const $regex = escapeStringRegexp(req.params.displayname);
+  const $regex = escapeStringRegexp(req.params.userData);
   const user = await User.find(
     {
       $or: [
@@ -93,11 +94,24 @@ export const getUser = async (req: Request, res: Response) => {
     "displayName status"
   );
 
-  if (user === null) {
-    return res.status(404).end();
+  if (user.length > 0) {
+    return res.status(200).json(user);
   }
 
-  return res.status(200).json(user);
+  if (isValidObjectId(req.params.userData)) {
+    const userById = await User.findById(
+      req.params.userData,
+      "displayName status"
+    );
+
+    if (userById) {
+      return res
+        .status(200)
+        .json({ displayName: userById.displayName, status: userById.status });
+    }
+  }
+
+  return res.status(404).json({ message: "No search results" });
 };
 
 export const updateUser = [
@@ -114,16 +128,37 @@ export const updateUser = [
       req.body.newPassword &&
       req.body.newPasswordConfirm
     ) {
-      if (req.body.newPassword < 8) {
-        return res
-          .status(401)
-          .json({ error: "Password is shorter than 8 characters" });
-      }
       const match = await bcrypt.compare(req.body.oldPassword, user.password);
       if (!match) {
-        res.status(400).json({ message: "Current password does not match" });
+        return res.status(400).json({
+          error: {
+            errors: {
+              currentPassword: {
+                message: "Password is incorrect",
+              },
+            },
+          },
+        });
+      } else if (req.body.newPassword < 8) {
+        return res.status(400).json({
+          error: {
+            errors: {
+              newPassword: {
+                message: "New password is shorter than 8 characters",
+              },
+            },
+          },
+        });
       } else if (req.body.newPassword !== req.body.newPasswordConfirm) {
-        res.status(400).json({ message: "New password does not match" });
+        return res.status(400).json({
+          error: {
+            errors: {
+              newPassword: {
+                message: "Passwords do not match",
+              },
+            },
+          },
+        });
       } else {
         req.body.password = await bcrypt.hash(req.body.newPassword, 10);
       }
@@ -132,9 +167,15 @@ export const updateUser = [
       req.body.newPassword ||
       req.body.newPasswordConfirm
     ) {
-      return res
-        .status(400)
-        .json({ message: "All input fields should be filled in" });
+      return res.status(400).json({
+        error: {
+          errors: {
+            passwords: {
+              message: "All input fields should be filled",
+            },
+          },
+        },
+      });
     }
     const updatedUser = await User.findByIdAndUpdate(
       req.user,
